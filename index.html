@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vault</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(180deg, #0b0b0f, #111);
+  color: white;
+}
+
+/* HEADER */
+header {
+  padding: 18px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  gap: 12px;
+  padding: 0 18px;
+}
+
+.tabs button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 14px;
+  background: #1c1c23;
+  color: #aaa;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  background: #3b82f6;
+  color: white;
+}
+
+/* CONTENT */
+section {
+  display: none;
+  padding: 18px;
+}
+
+section.active {
+  display: block;
+}
+
+/* UPLOAD */
+.upload {
+  margin-bottom: 16px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.05);
+  text-align: center;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px;
+}
+
+/* CARDS */
+.card {
+  background: #1c1c23;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+.card img,
+.card video {
+  width: 100%;
+  display: block;
+}
+</style>
+</head>
+
+<body>
+
+<header>🔐 Vault</header>
+
+<div class="tabs">
+  <button class="active" onclick="showTab('photos', this)">Photos</button>
+  <button onclick="showTab('videos', this)">Vidéos</button>
+</div>
+
+<section id="photos" class="active">
+  <div class="upload">
+    <input type="file" accept="image/*" onchange="uploadFile(event, 'photos')">
+  </div>
+  <div class="grid" id="photosGrid"></div>
+</section>
+
+<section id="videos">
+  <div class="upload">
+    <input type="file" accept="video/*" onchange="uploadFile(event, 'videos')">
+  </div>
+  <div class="grid" id="videosGrid"></div>
+</section>
+
+<!-- SUPABASE -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<script>
+/* 🔑 REMPLACE ICI */
+const SUPABASE_URL = "https://bmsbdeszysggzydukuoj.supabase.co";
+const SUPABASE_KEY = "sb_publishable_8SusH-6ZG7oBk1ppIxKgng_uCyB3jXJ";
+
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* TABS */
+function showTab(id, btn) {
+  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+/* UPLOAD */
+async function uploadFile(event, folder) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const fileName = Date.now() + "_" + file.name;
+
+  const { error } = await client
+    .storage
+    .from("media")
+    .upload(`${folder}/${fileName}`, file);
+
+  if (error) {
+    alert("Erreur upload");
+    console.error(error);
+    return;
+  }
+
+  loadMedia();
+}
+
+/* LOAD MEDIA */
+async function loadMedia() {
+  ["photos", "videos"].forEach(async folder => {
+    const { data, error } = await client
+      .storage
+      .from("media")
+      .list(folder, { limit: 100, sortBy: { column: "name", order: "desc" } });
+
+    if (error) return;
+
+    const grid = document.getElementById(folder + "Grid");
+    grid.innerHTML = "";
+
+    data.forEach(file => {
+      const { data: urlData } = client
+        .storage
+        .from("media")
+        .getPublicUrl(`${folder}/${file.name}`);
+
+      const url = urlData.publicUrl;
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      card.innerHTML = folder === "photos"
+        ? `<img src="${url}">`
+        : `<video src="${url}" controls></video>`;
+
+      grid.appendChild(card);
+    });
+  });
+}
+
+loadMedia();
+</script>
+
+</body>
+</html>
