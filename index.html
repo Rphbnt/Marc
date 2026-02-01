@@ -1,195 +1,169 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Toujours plus de blague</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vault</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-* {
-  box-sizing: border-box;
+:root{
+  --bg:#0b0b10;
+  --panel:rgba(255,255,255,.06);
+  --panel-strong:rgba(255,255,255,.10);
+  --text:#ffffff;
+  --muted:#a1a1aa;
+  --accent:#3b82f6;
+  --radius:18px;
 }
 
-body {
-  margin: 0;
-  font-family: 'Inter', sans-serif;
-  background: linear-gradient(180deg, #0b0b0f, #111);
-  color: white;
-}
+*{box-sizing:border-box}
+html,body{margin:0;background:radial-gradient(1200px 600px at 10% -10%,#111827,#0b0b10);color:var(--text);font-family:Inter,sans-serif}
 
 /* HEADER */
-header {
-  padding: 18px;
-  font-size: 20px;
-  font-weight: 600;
+.header{
+  position:sticky;top:0;z-index:10;
+  backdrop-filter: blur(14px);
+  background: linear-gradient(180deg, rgba(15,15,20,.7), rgba(15,15,20,.4));
+  border-bottom:1px solid rgba(255,255,255,.06);
 }
+.header-inner{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;
+}
+.brand{font-weight:700;letter-spacing:.3px}
 
 /* TABS */
-.tabs {
-  display: flex;
-  gap: 12px;
-  padding: 0 18px;
+.tabs{
+  display:flex;gap:10px;padding:12px 20px;
 }
-
-.tabs button {
-  flex: 1;
-  padding: 12px;
-  border: none;
-  border-radius: 14px;
-  background: #1c1c23;
-  color: #aaa;
-  font-size: 15px;
-  cursor: pointer;
+.tabs button{
+  flex:1;border:0;border-radius:14px;
+  padding:12px 14px;cursor:pointer;
+  background:var(--panel);color:var(--muted);
+  transition:.25s;
 }
-
-.tabs button.active {
-  background: #3b82f6;
-  color: white;
+.tabs button.active{
+  background:linear-gradient(135deg,var(--accent),#60a5fa);
+  color:#fff;box-shadow:0 10px 30px rgba(59,130,246,.35);
 }
 
 /* CONTENT */
-section {
-  display: none;
-  padding: 18px;
-}
-
-section.active {
-  display: block;
-}
+main{padding:20px}
+section{display:none}
+section.active{display:block}
 
 /* UPLOAD */
-.upload {
-  margin-bottom: 16px;
-  padding: 14px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.05);
-  text-align: center;
+.upload{
+  display:flex;align-items:center;justify-content:center;
+  border:1px dashed rgba(255,255,255,.18);
+  background:var(--panel);
+  border-radius:var(--radius);
+  padding:18px;margin-bottom:18px;
 }
+.upload label{
+  cursor:pointer;
+  padding:10px 14px;border-radius:12px;
+  background:var(--panel-strong);
+}
+.upload input{display:none}
 
 /* GRID */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 14px;
+.grid{
+  display:grid;gap:16px;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
 }
 
-/* CARDS */
-.card {
-  background: #1c1c23;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+/* CARD */
+.card{
+  background:var(--panel);
+  border-radius:var(--radius);
+  overflow:hidden;
+  box-shadow:0 20px 40px rgba(0,0,0,.45);
+  transition:.25s;
 }
+.card:hover{transform:translateY(-4px)}
+.card img,.card video{width:100%;display:block}
 
-.card img,
-.card video {
-  width: 100%;
-  display: block;
-}
+/* FOOTER SPACE */
+.spacer{height:40px}
 </style>
 </head>
 
 <body>
 
-<header>🔐 Vault</header>
-
-<div class="tabs">
-  <button class="active" onclick="showTab('photos', this)">Photos</button>
-  <button onclick="showTab('videos', this)">Vidéos</button>
-</div>
-
-<section id="photos" class="active">
-  <div class="upload">
-    <input type="file" accept="image/*" onchange="uploadFile(event, 'photos')">
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">🔐 Vault</div>
   </div>
-  <div class="grid" id="photosGrid"></div>
-</section>
-
-<section id="videos">
-  <div class="upload">
-    <input type="file" accept="video/*" onchange="uploadFile(event, 'videos')">
+  <div class="tabs">
+    <button class="active" onclick="showTab('photos',this)">Photos</button>
+    <button onclick="showTab('videos',this)">Vidéos</button>
   </div>
-  <div class="grid" id="videosGrid"></div>
-</section>
+</header>
 
-<!-- SUPABASE -->
+<main>
+  <section id="photos" class="active">
+    <div class="upload">
+      <label>
+        ➕ Ajouter une photo
+        <input type="file" accept="image/*" onchange="uploadFile(event,'photos')">
+      </label>
+    </div>
+    <div class="grid" id="photosGrid"></div>
+  </section>
+
+  <section id="videos">
+    <div class="upload">
+      <label>
+        ➕ Ajouter une vidéo
+        <input type="file" accept="video/*" onchange="uploadFile(event,'videos')">
+      </label>
+    </div>
+    <div class="grid" id="videosGrid"></div>
+  </section>
+
+  <div class="spacer"></div>
+</main>
+
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
 <script>
-/* 🔑 REMPLACE ICI */
 const SUPABASE_URL = "https://bmsbdeszysggzydukuoj.supabase.co";
 const SUPABASE_KEY = "sb_publishable_8SusH-6ZG7oBk1ppIxKgng_uCyB3jXJ";
-
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* TABS */
-function showTab(id, btn) {
-  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+function showTab(id,btn){
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
-
-  document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
 }
 
-/* UPLOAD */
-async function uploadFile(event, folder) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const fileName = Date.now() + "_" + file.name;
-
-  const { error } = await client
-    .storage
-    .from("media")
-    .upload(`${folder}/${fileName}`, file);
-
-  if (error) {
-    alert("Erreur upload");
-    console.error(error);
-    return;
-  }
-
+async function uploadFile(e,folder){
+  const file=e.target.files[0]; if(!file) return;
+  const name=Date.now()+"_"+file.name;
+  const {error}=await client.storage.from("media").upload(`${folder}/${name}`,file);
+  if(error){alert("Erreur upload");console.error(error);return;}
   loadMedia();
 }
 
-/* LOAD MEDIA */
-async function loadMedia() {
-  ["photos", "videos"].forEach(async folder => {
-    const { data, error } = await client
-      .storage
-      .from("media")
-      .list(folder, { limit: 100, sortBy: { column: "name", order: "desc" } });
-
-    if (error) return;
-
-    const grid = document.getElementById(folder + "Grid");
-    grid.innerHTML = "";
-
-    data.forEach(file => {
-      const { data: urlData } = client
-        .storage
-        .from("media")
-        .getPublicUrl(`${folder}/${file.name}`);
-
-      const url = urlData.publicUrl;
-
-      const card = document.createElement("div");
-      card.className = "card";
-
-      card.innerHTML = folder === "photos"
-        ? `<img src="${url}">`
-        : `<video src="${url}" controls></video>`;
-
+async function loadMedia(){
+  ["photos","videos"].forEach(async folder=>{
+    const {data}=await client.storage.from("media").list(folder,{limit:100,sortBy:{column:"name",order:"desc"}});
+    const grid=document.getElementById(folder+"Grid"); grid.innerHTML="";
+    data.forEach(f=>{
+      const url=client.storage.from("media").getPublicUrl(`${folder}/${f.name}`).data.publicUrl;
+      const card=document.createElement("div"); card.className="card";
+      card.innerHTML= folder==="photos"
+        ? `<img src="${url}" loading="lazy">`
+        : `<video src="${url}" controls preload="metadata"></video>`;
       grid.appendChild(card);
     });
   });
 }
-
 loadMedia();
 </script>
 
 </body>
 </html>
-
