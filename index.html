@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!Doctype html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
@@ -19,12 +19,7 @@
 }
 
 *{box-sizing:border-box}
-html,body{
-  margin:0;
-  background:radial-gradient(1200px 600px at 10% -10%,#111827,#0b0b10);
-  color:var(--text);
-  font-family:Inter,sans-serif
-}
+html,body{margin:0;background:radial-gradient(1200px 600px at 10% -10%,#111827,#0b0b10);color:var(--text);font-family:Inter,sans-serif}
 
 /* HEADER */
 .header{
@@ -37,18 +32,21 @@ html,body{
   display:flex;align-items:center;justify-content:space-between;
   padding:16px 20px;
 }
-.brand{font-weight:700}
+.brand{font-weight:700;letter-spacing:.3px}
 
 /* TABS */
-.tabs{display:flex;gap:10px;padding:12px 20px}
+.tabs{
+  display:flex;gap:10px;padding:12px 20px;
+}
 .tabs button{
   flex:1;border:0;border-radius:14px;
-  padding:12px;cursor:pointer;
+  padding:12px 14px;cursor:pointer;
   background:var(--panel);color:var(--muted);
+  transition:.25s;
 }
 .tabs button.active{
   background:linear-gradient(135deg,var(--accent),#60a5fa);
-  color:#fff;
+  color:#fff;box-shadow:0 10px 30px rgba(59,130,246,.35);
 }
 
 /* CONTENT */
@@ -58,7 +56,7 @@ section.active{display:block}
 
 /* UPLOAD */
 .upload{
-  display:flex;justify-content:center;
+  display:flex;align-items:center;justify-content:center;
   border:1px dashed rgba(255,255,255,.18);
   background:var(--panel);
   border-radius:var(--radius);
@@ -66,16 +64,14 @@ section.active{display:block}
 }
 .upload label{
   cursor:pointer;
-  padding:10px 14px;
-  border-radius:12px;
+  padding:10px 14px;border-radius:12px;
   background:var(--panel-strong);
 }
 .upload input{display:none}
 
 /* GRID */
 .grid{
-  display:grid;
-  gap:16px;
+  display:grid;gap:16px;
   grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
 }
 
@@ -85,9 +81,12 @@ section.active{display:block}
   border-radius:var(--radius);
   overflow:hidden;
   box-shadow:0 20px 40px rgba(0,0,0,.45);
+  transition:.25s;
 }
+.card:hover{transform:translateY(-4px)}
 .card img,.card video{width:100%;display:block}
 
+/* FOOTER SPACE */
 .spacer{height:40px}
 </style>
 </head>
@@ -141,66 +140,30 @@ function showTab(id,btn){
   btn.classList.add("active");
 }
 
-/* 🔥 GÉNÉRATION MINIATURE = 1ʳᵉ FRAME */
-function generatePoster(videoUrl, videoEl){
-  const v = document.createElement("video");
-  v.src = videoUrl;
-  v.crossOrigin = "anonymous";
-  v.muted = true;
-  v.playsInline = true;
-
-  v.addEventListener("loadeddata", () => {
-    v.currentTime = 0.1;
-  });
-
-  v.addEventListener("seeked", () => {
-    const canvas = document.createElement("canvas");
-    canvas.width = v.videoWidth;
-    canvas.height = v.videoHeight;
-    canvas.getContext("2d").drawImage(v, 0, 0);
-    videoEl.poster = canvas.toDataURL("image/jpeg", 0.8);
-  });
-}
-
 async function uploadFile(e,folder){
   const file=e.target.files[0]; if(!file) return;
   const name=Date.now()+"_"+file.name;
   const {error}=await client.storage.from("media").upload(`${folder}/${name}`,file);
-  if(error){alert("Erreur upload");return;}
+  if(error){alert("Erreur upload");console.error(error);return;}
   loadMedia();
 }
 
 async function loadMedia(){
   ["photos","videos"].forEach(async folder=>{
-    const {data}=await client.storage.from("media").list(folder);
-    const grid=document.getElementById(folder+"Grid");
-    grid.innerHTML="";
-
+    const {data}=await client.storage.from("media").list(folder,{limit:100,sortBy:{column:"name",order:"desc"}});
+    const grid=document.getElementById(folder+"Grid"); grid.innerHTML="";
     data.forEach(f=>{
-      const url = client.storage.from("media").getPublicUrl(`${folder}/${f.name}`).data.publicUrl;
-      const card=document.createElement("div");
-      card.className="card";
-
-      if(folder==="photos"){
-        card.innerHTML = `<img src="${url}" loading="lazy">`;
-      } else {
-        const video=document.createElement("video");
-        video.src=url;
-        video.controls=true;
-        video.preload="metadata";
-        video.playsInline=true;
-
-        generatePoster(url, video);
-        card.appendChild(video);
-      }
-
+      const url=client.storage.from("media").getPublicUrl(`${folder}/${f.name}`).data.publicUrl;
+      const card=document.createElement("div"); card.className="card";
+      card.innerHTML= folder==="photos"
+        ? `<img src="${url}" loading="lazy">`
+        : `<video src="${url}" controls preload="metadata"></video>`;
       grid.appendChild(card);
     });
   });
 }
-
 loadMedia();
 </script>
 
 </body>
-</html>
+</html> 
