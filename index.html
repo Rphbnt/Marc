@@ -150,14 +150,33 @@ async function uploadFile(e,folder){
 
 async function loadMedia(){
   ["photos","videos"].forEach(async folder=>{
-    const {data}=await client.storage.from("media").list(folder,{limit:100,sortBy:{column:"name",order:"desc"}});
-    const grid=document.getElementById(folder+"Grid"); grid.innerHTML="";
+    const {data}=await client.storage
+      .from("media")
+      .list(folder,{limit:100,sortBy:{column:"name",order:"desc"}});
+
+    const grid=document.getElementById(folder+"Grid");
+    grid.innerHTML="";
+
     data.forEach(f=>{
-      const url=client.storage.from("media").getPublicUrl(`${folder}/${f.name}`).data.publicUrl;
-      const card=document.createElement("div"); card.className="card";
-      card.innerHTML= folder==="photos"
+      const url = client
+        .storage
+        .from("media")
+        .getPublicUrl(`${folder}/${f.name}`)
+        .data.publicUrl;
+
+      const card=document.createElement("div");
+      card.className="card";
+
+      card.innerHTML = folder==="photos"
         ? `<img src="${url}" loading="lazy">`
-        : `<video src="${url}" controls preload="metadata"></video>`;
+        : `<video 
+             src="${url}" 
+             controls 
+             preload="metadata"
+             playsinline
+             muted
+           ></video>`;
+
       grid.appendChild(card);
     });
   });
