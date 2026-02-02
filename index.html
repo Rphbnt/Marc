@@ -168,13 +168,14 @@ async function loadMedia(){
       card.className="card";
 
       card.innerHTML = folder==="photos"
-        ? `<img src="${url}" loading="lazy">`
-        : `<video 
-             src="${url}" 
-             controls 
-             preload="metadata"
-             playsinline
-           ></video>`;
+  ? `<img src="${url}" loading="lazy">`
+  : `<video
+       src="${url}"
+       controls
+       preload="metadata"
+       playsinline
+       poster="https://picsum.photos/400/250?random=${Math.random()}"
+     ></video>`;
 
       grid.appendChild(card);
     });
