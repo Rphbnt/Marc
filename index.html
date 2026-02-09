@@ -62,7 +62,10 @@ section.active{display:block}
   border-radius:var(--radius);
   overflow:hidden
 }
-.card img,.card video{width:100%;display:block}
+.card img,.card video{
+  width:100%;
+  display:block;
+}
 </style>
 </head>
 
@@ -127,14 +130,13 @@ async function upload(e,type){
     );
 
     const data = await res.json();
-    console.log("Cloudinary:", data);
 
     if(!data.secure_url){
       alert("❌ Upload refusé par Cloudinary");
-      return;
+      continue;
     }
 
-    if(type==="image"){
+    if(type === "image"){
       photos.unshift(data.secure_url);
       localStorage.setItem("photos", JSON.stringify(photos));
     } else {
@@ -145,24 +147,58 @@ async function upload(e,type){
   render();
 }
 
+/* 🔥 RENDER AVEC AUTO-SUPPRESSION DES FICHIERS CASSÉS */
 function render(){
   const pGrid = document.getElementById("photosGrid");
   const vGrid = document.getElementById("videosGrid");
   pGrid.innerHTML = "";
   vGrid.innerHTML = "";
 
+  // PHOTOS
+  photos = photos.filter(url => typeof url === "string");
+  localStorage.setItem("photos", JSON.stringify(photos));
+
   photos.forEach(url=>{
-    pGrid.innerHTML += `<div class="card"><img src="${url}" loading="lazy"></div>`;
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const img = document.createElement("img");
+    img.src = url;
+    img.loading = "lazy";
+
+    img.onerror = () => {
+      photos = photos.filter(u => u !== url);
+      localStorage.setItem("photos", JSON.stringify(photos));
+      card.remove();
+    };
+
+    card.appendChild(img);
+    pGrid.appendChild(card);
   });
 
+  // VIDEOS
+  videos = videos.filter(url => typeof url === "string" && url.includes("cloudinary"));
+  localStorage.setItem("videos", JSON.stringify(videos));
+
   videos.forEach(url=>{
-    const thumb = url.replace("/upload/","/upload/so_0/");
-    vGrid.innerHTML += `
-      <div class="card">
-        <video controls poster="${thumb}">
-          <source src="${url}">
-        </video>
-      </div>`;
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const video = document.createElement("video");
+    video.controls = true;
+
+    video.onerror = () => {
+      videos = videos.filter(u => u !== url);
+      localStorage.setItem("videos", JSON.stringify(videos));
+      card.remove();
+    };
+
+    const source = document.createElement("source");
+    source.src = url;
+
+    video.appendChild(source);
+    card.appendChild(video);
+    vGrid.appendChild(card);
   });
 }
 
