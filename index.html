@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Les meilleures blagues 🤣</title>
+<title> Les meilleures blagues 🤣</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
@@ -23,49 +23,34 @@ html,body{
   margin:0;
   background:radial-gradient(1200px 600px at 10% -10%,#111827,#0b0b10);
   color:var(--text);
-  font-family:Inter,sans-serif
+  font-family:Inter,sans-serif;
 }
 
 /* HEADER */
 .header{
-  position:sticky;
-  top:0;
-  z-index:10;
+  position:sticky;top:0;z-index:10;
   backdrop-filter: blur(14px);
   background: linear-gradient(180deg, rgba(15,15,20,.7), rgba(15,15,20,.4));
   border-bottom:1px solid rgba(255,255,255,.06);
 }
 .header-inner{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
+  display:flex;align-items:center;justify-content:space-between;
   padding:16px 20px;
 }
-.brand{
-  font-weight:700;
-  letter-spacing:.3px;
-}
+.brand{font-weight:700}
 
 /* TABS */
-.tabs{
-  display:flex;
-  gap:10px;
-  padding:12px 20px;
-}
+.tabs{display:flex;gap:10px;padding:12px 20px}
 .tabs button{
-  flex:1;
-  border:0;
-  border-radius:14px;
-  padding:12px 14px;
-  cursor:pointer;
+  flex:1;border:0;border-radius:14px;
+  padding:12px;
   background:var(--panel);
   color:var(--muted);
-  transition:.25s;
+  cursor:pointer;
 }
 .tabs button.active{
   background:linear-gradient(135deg,var(--accent),#60a5fa);
   color:#fff;
-  box-shadow:0 10px 30px rgba(59,130,246,.35);
 }
 
 /* CONTENT */
@@ -75,49 +60,50 @@ section.active{display:block}
 
 /* UPLOAD */
 .upload{
-  display:flex;
-  align-items:center;
-  justify-content:center;
   border:1px dashed rgba(255,255,255,.18);
   background:var(--panel);
-  border-radius:var(--radius);
+  border-radius:18px;
   padding:18px;
+  text-align:center;
   margin-bottom:18px;
 }
 .upload label{
   cursor:pointer;
+  background:var(--panel-strong);
   padding:10px 14px;
   border-radius:12px;
-  background:var(--panel-strong);
 }
 .upload input{display:none}
 
 /* GRID */
 .grid{
   display:grid;
-  gap:16px;
   grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:16px;
 }
 
 /* CARD */
 .card{
   background:var(--panel);
-  border-radius:var(--radius);
+  border-radius:18px;
   overflow:hidden;
-  box-shadow:0 20px 40px rgba(0,0,0,.45);
-  transition:.25s;
 }
-.card:hover{
-  transform:translateY(-4px);
-}
-.card img,
-.card video{
+.card img,.card video{
   width:100%;
   display:block;
 }
 
-/* FOOTER SPACE */
-.spacer{height:40px}
+/* LOAD MORE */
+.load-more{
+  margin:30px auto;
+  display:block;
+  padding:12px 18px;
+  border-radius:14px;
+  border:0;
+  background:var(--panel-strong);
+  color:#fff;
+  cursor:pointer;
+}
 </style>
 </head>
 
@@ -142,6 +128,7 @@ section.active{display:block}
       </label>
     </div>
     <div class="grid" id="photosGrid"></div>
+    <button class="load-more" onclick="loadMore('photos')">Charger plus</button>
   </section>
 
   <section id="videos">
@@ -152,9 +139,8 @@ section.active{display:block}
       </label>
     </div>
     <div class="grid" id="videosGrid"></div>
+    <button class="load-more" onclick="loadMore('videos')">Charger plus</button>
   </section>
-
-  <div class="spacer"></div>
 </main>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -163,90 +149,55 @@ const SUPABASE_URL = "https://bmsbdeszysggzydukuoj.supabase.co";
 const SUPABASE_KEY = "sb_publishable_8SusH-6ZG7oBk1ppIxKgng_uCyB3jXJ";
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* TABS */
-function showTab(id, btn){
-  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+const PAGE_SIZE = 30;
+let page = { photos:0, videos:0 };
+
+function showTab(id,btn){
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
-  document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
 }
 
-/* UPLOAD */
-async function uploadFile(e, folder){
-  const file = e.target.files[0];
-  if(!file) return;
-
-  const name = Date.now() + "_" + file.name;
-
-  const { error } = await client
-    .storage
-    .from("media")
-    .upload(`${folder}/${name}`, file);
-
-  if(error){
-    alert("Erreur upload");
-    console.error(error);
-    return;
-  }
-
-  loadMedia();
+async function uploadFile(e,folder){
+  const file=e.target.files[0]; if(!file) return;
+  const name=Date.now()+"_"+file.name;
+  await client.storage.from("media").upload(`${folder}/${name}`,file);
+  localStorage.removeItem(folder+"_cache");
+  page[folder]=0;
+  document.getElementById(folder+"Grid").innerHTML="";
+  loadMore(folder);
 }
 
-/* LOAD ALL MEDIA (pagination fix) */
-async function loadMedia(){
-  for (const folder of ["photos","videos"]) {
+async function loadMore(folder){
+  let cache = JSON.parse(localStorage.getItem(folder+"_cache")||"[]");
 
-    const grid = document.getElementById(folder + "Grid");
-    grid.innerHTML = "";
-
-    let offset = 0;
-    const limit = 100;
-    let done = false;
-
-    while (!done) {
-      const { data, error } = await client
-        .storage
-        .from("media")
-        .list(folder, {
-          limit,
-          offset,
-          sortBy: { column: "name", order: "desc" }
-        });
-
-      if (error || !data || data.length === 0) {
-        done = true;
-        break;
-      }
-
-      data.forEach(file => {
-        const url = client
-          .storage
-          .from("media")
-          .getPublicUrl(`${folder}/${file.name}`).data.publicUrl;
-
-        const card = document.createElement("div");
-        card.className = "card";
-
-        if (folder === "photos") {
-          card.innerHTML = `<img src="${url}" loading="lazy">`;
-        } else {
-          const video = document.createElement("video");
-          video.src = url;
-          video.controls = true;
-          video.preload = "metadata";
-          video.playsInline = true;
-          card.appendChild(video);
-        }
-
-        grid.appendChild(card);
-      });
-
-      offset += limit;
-    }
+  if(cache.length===0){
+    const {data}=await client.storage.from("media")
+      .list(folder,{limit:1000,sortBy:{column:"name",order:"desc"}});
+    cache=data;
+    localStorage.setItem(folder+"_cache",JSON.stringify(data));
   }
+
+  const start = page[folder]*PAGE_SIZE;
+  const slice = cache.slice(start,start+PAGE_SIZE);
+  page[folder]++;
+
+  const grid=document.getElementById(folder+"Grid");
+
+  slice.forEach(f=>{
+    const url=client.storage.from("media").getPublicUrl(`${folder}/${f.name}`).data.publicUrl;
+    const card=document.createElement("div");
+    card.className="card";
+    card.innerHTML = folder==="photos"
+      ? `<img src="${url}" loading="lazy">`
+      : `<video src="${url}" controls preload="metadata" playsinline></video>`;
+    grid.appendChild(card);
+  });
 }
 
-loadMedia();
+loadMore("photos");
+loadMore("videos");
 </script>
 
 </body>
