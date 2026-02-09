@@ -1,25 +1,23 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title> Les meilleures blagues 🤣</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vault 🔐</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
 <style>
 :root{
   --bg:#0b0b10;
   --panel:rgba(255,255,255,.06);
-  --panel-strong:rgba(255,255,255,.10);
-  --text:#ffffff;
+  --text:#fff;
   --muted:#a1a1aa;
   --accent:#3b82f6;
   --radius:18px;
 }
-
 *{box-sizing:border-box}
-html,body{
+body{
   margin:0;
   background:radial-gradient(1200px 600px at 10% -10%,#111827,#0b0b10);
   color:var(--text);
@@ -27,22 +25,23 @@ html,body{
 }
 
 /* HEADER */
-.header{
+header{
   position:sticky;top:0;z-index:10;
-  backdrop-filter: blur(14px);
-  background: linear-gradient(180deg, rgba(15,15,20,.7), rgba(15,15,20,.4));
-  border-bottom:1px solid rgba(255,255,255,.06);
+  backdrop-filter:blur(12px);
+  background:rgba(15,15,20,.6);
+  border-bottom:1px solid rgba(255,255,255,.08);
 }
 .header-inner{
-  display:flex;align-items:center;justify-content:space-between;
   padding:16px 20px;
+  font-weight:700;
 }
-.brand{font-weight:700}
-
-/* TABS */
-.tabs{display:flex;gap:10px;padding:12px 20px}
+.tabs{
+  display:flex;gap:10px;padding:12px 20px;
+}
 .tabs button{
-  flex:1;border:0;border-radius:14px;
+  flex:1;
+  border:0;
+  border-radius:14px;
   padding:12px;
   background:var(--panel);
   color:var(--muted);
@@ -60,18 +59,18 @@ section.active{display:block}
 
 /* UPLOAD */
 .upload{
-  border:1px dashed rgba(255,255,255,.18);
-  background:var(--panel);
-  border-radius:18px;
+  border:1px dashed rgba(255,255,255,.2);
+  border-radius:var(--radius);
   padding:18px;
   text-align:center;
-  margin-bottom:18px;
+  margin-bottom:20px;
 }
 .upload label{
   cursor:pointer;
-  background:var(--panel-strong);
-  padding:10px 14px;
+  padding:12px 16px;
   border-radius:12px;
+  background:var(--panel);
+  display:inline-block;
 }
 .upload input{display:none}
 
@@ -81,38 +80,22 @@ section.active{display:block}
   grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
   gap:16px;
 }
-
-/* CARD */
 .card{
   background:var(--panel);
-  border-radius:18px;
+  border-radius:var(--radius);
   overflow:hidden;
 }
 .card img,.card video{
   width:100%;
   display:block;
 }
-
-/* LOAD MORE */
-.load-more{
-  margin:30px auto;
-  display:block;
-  padding:12px 18px;
-  border-radius:14px;
-  border:0;
-  background:var(--panel-strong);
-  color:#fff;
-  cursor:pointer;
-}
 </style>
 </head>
 
 <body>
 
-<header class="header">
-  <div class="header-inner">
-    <div class="brand">🔐 Vault</div>
-  </div>
+<header>
+  <div class="header-inner">🔐 Vault</div>
   <div class="tabs">
     <button class="active" onclick="showTab('photos',this)">Photos</button>
     <button onclick="showTab('videos',this)">Vidéos</button>
@@ -120,37 +103,35 @@ section.active{display:block}
 </header>
 
 <main>
-  <section id="photos" class="active">
-    <div class="upload">
-      <label>
-        ➕ Ajouter une photo
-        <input type="file" accept="image/*" onchange="uploadFile(event,'photos')">
-      </label>
-    </div>
-    <div class="grid" id="photosGrid"></div>
-    <button class="load-more" onclick="loadMore('photos')">Charger plus</button>
-  </section>
 
-  <section id="videos">
-    <div class="upload">
-      <label>
-        ➕ Ajouter une vidéo
-        <input type="file" accept="video/*" onchange="uploadFile(event,'videos')">
-      </label>
-    </div>
-    <div class="grid" id="videosGrid"></div>
-    <button class="load-more" onclick="loadMore('videos')">Charger plus</button>
-  </section>
+<section id="photos" class="active">
+  <div class="upload">
+    <label>
+      ➕ Ajouter des photos
+      <input type="file" accept="image/*" multiple onchange="upload(event,'image')">
+    </label>
+  </div>
+  <div class="grid" id="photosGrid"></div>
+</section>
+
+<section id="videos">
+  <div class="upload">
+    <label>
+      ➕ Ajouter des vidéos
+      <input type="file" accept="video/*" multiple onchange="upload(event,'video')">
+    </label>
+  </div>
+  <div class="grid" id="videosGrid"></div>
+</section>
+
 </main>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = "https://bmsbdeszysggzydukuoj.supabase.co";
-const SUPABASE_KEY = "sb_publishable_8SusH-6ZG7oBk1ppIxKgng_uCyB3jXJ";
-const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const CLOUD_NAME = "dxejmrjxh"; 
+const UPLOAD_PRESET = "vault_upload"; 
 
-const PAGE_SIZE = 30;
-let page = { photos:0, videos:0 };
+let photos = JSON.parse(localStorage.getItem("photos")||"[]");
+let videos = JSON.parse(localStorage.getItem("videos")||"[]");
 
 function showTab(id,btn){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
@@ -159,45 +140,56 @@ function showTab(id,btn){
   btn.classList.add("active");
 }
 
-async function uploadFile(e,folder){
-  const file=e.target.files[0]; if(!file) return;
-  const name=Date.now()+"_"+file.name;
-  await client.storage.from("media").upload(`${folder}/${name}`,file);
-  localStorage.removeItem(folder+"_cache");
-  page[folder]=0;
-  document.getElementById(folder+"Grid").innerHTML="";
-  loadMore(folder);
+async function upload(e,type){
+  const files = e.target.files;
+  if(!files.length) return;
+
+  for(let i=0;i<files.length;i++){
+    const file = files[i];
+    const form = new FormData();
+    form.append("file", file);
+    form.append("upload_preset", UPLOAD_PRESET);
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${type}/upload`,{
+      method:"POST",
+      body: form
+    });
+    const data = await res.json();
+
+    if(type==="image"){
+      photos.unshift(data.secure_url);
+      localStorage.setItem("photos",JSON.stringify(photos));
+    } else {
+      videos.unshift(data.secure_url);
+      localStorage.setItem("videos",JSON.stringify(videos));
+    }
+  }
+  render();
 }
 
-async function loadMore(folder){
-  let cache = JSON.parse(localStorage.getItem(folder+"_cache")||"[]");
+function render(){
+  const pGrid = document.getElementById("photosGrid");
+  const vGrid = document.getElementById("videosGrid");
+  pGrid.innerHTML = "";
+  vGrid.innerHTML = "";
 
-  if(cache.length===0){
-    const {data}=await client.storage.from("media")
-      .list(folder,{limit:1000,sortBy:{column:"name",order:"desc"}});
-    cache=data;
-    localStorage.setItem(folder+"_cache",JSON.stringify(data));
-  }
+  photos.forEach(url=>{
+    pGrid.innerHTML += `<div class="card"><img src="${url}" loading="lazy"></div>`;
+  });
 
-  const start = page[folder]*PAGE_SIZE;
-  const slice = cache.slice(start,start+PAGE_SIZE);
-  page[folder]++;
-
-  const grid=document.getElementById(folder+"Grid");
-
-  slice.forEach(f=>{
-    const url=client.storage.from("media").getPublicUrl(`${folder}/${f.name}`).data.publicUrl;
-    const card=document.createElement("div");
-    card.className="card";
-    card.innerHTML = folder==="photos"
-      ? `<img src="${url}" loading="lazy">`
-      : `<video src="${url}" controls preload="metadata" playsinline></video>`;
-    grid.appendChild(card);
+  videos.forEach(url=>{
+    // Poster = première image du video
+    const thumb = url.replace("/upload/","/upload/so_0/");
+    vGrid.innerHTML += `
+      <div class="card">
+        <video controls poster="${thumb}">
+          <source src="${url}">
+        </video>
+      </div>`;
   });
 }
 
-loadMore("photos");
-loadMore("videos");
+render();
 </script>
 
 </body>
