@@ -23,72 +23,46 @@ body{
   color:var(--text);
   font-family:Inter,sans-serif;
 }
-
-/* HEADER */
 header{
   position:sticky;top:0;z-index:10;
   backdrop-filter:blur(12px);
   background:rgba(15,15,20,.6);
   border-bottom:1px solid rgba(255,255,255,.08);
 }
-.header-inner{
-  padding:16px 20px;
-  font-weight:700;
-}
-.tabs{
-  display:flex;gap:10px;padding:12px 20px;
-}
+.header-inner{padding:16px 20px;font-weight:700}
+.tabs{display:flex;gap:10px;padding:12px 20px}
 .tabs button{
-  flex:1;
-  border:0;
-  border-radius:14px;
-  padding:12px;
-  background:var(--panel);
-  color:var(--muted);
-  cursor:pointer;
+  flex:1;border:0;border-radius:14px;padding:12px;
+  background:var(--panel);color:var(--muted);cursor:pointer
 }
 .tabs button.active{
   background:linear-gradient(135deg,var(--accent),#60a5fa);
-  color:#fff;
+  color:#fff
 }
-
-/* CONTENT */
 main{padding:20px}
 section{display:none}
 section.active{display:block}
-
-/* UPLOAD */
 .upload{
   border:1px dashed rgba(255,255,255,.2);
   border-radius:var(--radius);
-  padding:18px;
-  text-align:center;
-  margin-bottom:20px;
+  padding:18px;text-align:center;margin-bottom:20px
 }
 .upload label{
-  cursor:pointer;
-  padding:12px 16px;
-  border-radius:12px;
-  background:var(--panel);
-  display:inline-block;
+  cursor:pointer;padding:12px 16px;
+  border-radius:12px;background:var(--panel);display:inline-block
 }
 .upload input{display:none}
-
-/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:16px;
+  gap:16px
 }
 .card{
   background:var(--panel);
   border-radius:var(--radius);
-  overflow:hidden;
+  overflow:hidden
 }
-.card img,.card video{
-  width:100%;
-  display:block;
-}
+.card img,.card video{width:100%;display:block}
 </style>
 </head>
 
@@ -103,7 +77,6 @@ section.active{display:block}
 </header>
 
 <main>
-
 <section id="photos" class="active">
   <div class="upload">
     <label>
@@ -123,15 +96,14 @@ section.active{display:block}
   </div>
   <div class="grid" id="videosGrid"></div>
 </section>
-
 </main>
 
 <script>
-const CLOUD_NAME = "dxejmrjxh"; 
-const UPLOAD_PRESET = "vault_upload"; 
+const CLOUD_NAME = "dxejmrjxh";
+const UPLOAD_PRESET = "vault_upload";
 
-let photos = JSON.parse(localStorage.getItem("photos")||"[]");
-let videos = JSON.parse(localStorage.getItem("videos")||"[]");
+let photos = JSON.parse(localStorage.getItem("photos") || "[]");
+let videos = JSON.parse(localStorage.getItem("videos") || "[]");
 
 function showTab(id,btn){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
@@ -144,24 +116,30 @@ async function upload(e,type){
   const files = e.target.files;
   if(!files.length) return;
 
-  for(let i=0;i<files.length;i++){
-    const file = files[i];
+  for(const file of files){
     const form = new FormData();
     form.append("file", file);
     form.append("upload_preset", UPLOAD_PRESET);
 
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${type}/upload`,{
-      method:"POST",
-      body: form
-    });
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${type}/upload`,
+      { method:"POST", body:form }
+    );
+
     const data = await res.json();
+    console.log("Cloudinary:", data);
+
+    if(!data.secure_url){
+      alert("❌ Upload refusé par Cloudinary");
+      return;
+    }
 
     if(type==="image"){
       photos.unshift(data.secure_url);
-      localStorage.setItem("photos",JSON.stringify(photos));
+      localStorage.setItem("photos", JSON.stringify(photos));
     } else {
       videos.unshift(data.secure_url);
-      localStorage.setItem("videos",JSON.stringify(videos));
+      localStorage.setItem("videos", JSON.stringify(videos));
     }
   }
   render();
@@ -178,7 +156,6 @@ function render(){
   });
 
   videos.forEach(url=>{
-    // Poster = première image du video
     const thumb = url.replace("/upload/","/upload/so_0/");
     vGrid.innerHTML += `
       <div class="card">
