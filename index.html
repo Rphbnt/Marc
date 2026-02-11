@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Les meilleures blagues 🤣</title>
+<title>Vault 🔐</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
@@ -11,7 +11,6 @@
 :root{
   --bg:#0b0b10;
   --panel:rgba(255,255,255,.06);
-  --panel-strong:rgba(255,255,255,.10);
   --text:#fff;
   --muted:#a1a1aa;
   --accent:#3b82f6;
@@ -101,7 +100,7 @@ section.active{display:block}
 
 <script>
 const CLOUD_NAME = "dxejmrjxh";
-const UPLOAD_PRESET = "ml_default"; // ton preset Cloudinary pour upload public
+const UPLOAD_PRESET = "ml_default";
 
 function showTab(id,btn){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
@@ -110,7 +109,7 @@ function showTab(id,btn){
   btn.classList.add("active");
 }
 
-// Upload direct sur Cloudinary
+// Upload vers Cloudinary
 async function upload(e,type){
   const files = e.target.files;
   if(!files.length) return;
@@ -120,46 +119,53 @@ async function upload(e,type){
     form.append("file", file);
     form.append("upload_preset", UPLOAD_PRESET);
 
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${type}/upload`, { method:"POST", body:form });
-    const data = await res.json();
-    console.log("Cloudinary upload:", data);
-
-    if(!data.secure_url){
-      alert("❌ Upload refusé par Cloudinary");
-      continue;
-    }
-
-    // Sauvegarde dans localStorage pour affichage instantané
-    let list = JSON.parse(localStorage.getItem(type==='image'?'photos':'videos')||"[]");
-    list.unshift(data.secure_url);
-    localStorage.setItem(type==='image'?'photos':'videos', JSON.stringify(list));
+    await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${type}/upload`,
+      { method:"POST", body:form }
+    );
   }
-  render();
+
+  loadMedia(); // recharge après upload
+}
+
+// Récupère tous les fichiers depuis Cloudinary
+async function fetchMedia(type){
+  const res = await fetch(
+    `https://res.cloudinary.com/${CLOUD_NAME}/${type}/list/upload.json`
+  );
+  const data = await res.json();
+  return data.resources || [];
 }
 
 // Affichage
-function render(){
+async function loadMedia(){
   const pGrid = document.getElementById("photosGrid");
   const vGrid = document.getElementById("videosGrid");
+
   pGrid.innerHTML = "";
   vGrid.innerHTML = "";
 
-  const photos = JSON.parse(localStorage.getItem("photos")||"[]");
-  const videos = JSON.parse(localStorage.getItem("videos")||"[]");
+  const images = await fetchMedia("image");
+  const videos = await fetchMedia("video");
 
-  photos.forEach(url=>{
-    pGrid.innerHTML += `<div class="card"><img src="${url}" loading="lazy"></div>`;
+  images.reverse().forEach(item=>{
+    pGrid.innerHTML += `
+      <div class="card">
+        <img src="https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${item.public_id}.${item.format}">
+      </div>`;
   });
 
-  videos.forEach(url=>{
-    // miniature = première image
-    const thumb = url.replace("/upload/","/upload/so_0/");
-    vGrid.innerHTML += `<div class="card"><video controls poster="${thumb}"><source src="${url}"></video></div>`;
+  videos.reverse().forEach(item=>{
+    vGrid.innerHTML += `
+      <div class="card">
+        <video controls>
+          <source src="https://res.cloudinary.com/${CLOUD_NAME}/video/upload/${item.public_id}.${item.format}">
+        </video>
+      </div>`;
   });
 }
 
-// Charge tout au démarrage
-render();
+loadMedia();
 </script>
 
 </body>
