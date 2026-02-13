@@ -99,70 +99,66 @@ section.active{display:block}
 </main>
 
 <script>
-const CLOUD_NAME = "dxejmrjxh";
-const UPLOAD_PRESET = "ml_default";
-
 function showTab(id,btn){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
 }
+</script>
 
-// Upload vers Cloudinary
-async function upload(e,type){
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDrVPsGx7NjVNcvf7Qs4dmWE167GS597Co",
+  authDomain: "vaultmedia-41f6c.firebaseapp.com",
+  projectId: "vaultmedia-41f6c",
+  storageBucket: "vaultmedia-41f6c.firebasestorage.app",
+  messagingSenderId: "997450960895",
+  appId: "1:997450960895:web:92c8ced846b3e295a3a1ca"
+};
+
+const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
+
+window.upload = async function(e,type){
   const files = e.target.files;
   if(!files.length) return;
 
   for(const file of files){
-    const form = new FormData();
-    form.append("file", file);
-    form.append("upload_preset", UPLOAD_PRESET);
-
-    await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${type}/upload`,
-      { method:"POST", body:form }
-    );
+    const fileRef = ref(storage, type + "/" + Date.now() + "_" + file.name);
+    await uploadBytes(fileRef, file);
   }
 
-  loadMedia(); // recharge après upload
+  loadMedia();
 }
 
-// Récupère tous les fichiers depuis Cloudinary
-async function fetchMedia(type){
-  const res = await fetch(
-    `https://res.cloudinary.com/${CLOUD_NAME}/${type}/list/upload.json`
-  );
-  const data = await res.json();
-  return data.resources || [];
-}
-
-// Affichage
 async function loadMedia(){
   const pGrid = document.getElementById("photosGrid");
   const vGrid = document.getElementById("videosGrid");
 
-  pGrid.innerHTML = "";
-  vGrid.innerHTML = "";
+  pGrid.innerHTML="";
+  vGrid.innerHTML="";
 
-  const images = await fetchMedia("image");
-  const videos = await fetchMedia("video");
+  try{
+    const photosRef = ref(storage,"image");
+    const photos = await listAll(photosRef);
+    for(const item of photos.items){
+      const url = await getDownloadURL(item);
+      pGrid.innerHTML += `<div class="card"><img src="${url}" loading="lazy"></div>`;
+    }
+  }catch{}
 
-  images.reverse().forEach(item=>{
-    pGrid.innerHTML += `
-      <div class="card">
-        <img src="https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${item.public_id}.${item.format}">
-      </div>`;
-  });
-
-  videos.reverse().forEach(item=>{
-    vGrid.innerHTML += `
-      <div class="card">
-        <video controls>
-          <source src="https://res.cloudinary.com/${CLOUD_NAME}/video/upload/${item.public_id}.${item.format}">
-        </video>
-      </div>`;
-  });
+  try{
+    const videosRef = ref(storage,"video");
+    const videos = await listAll(videosRef);
+    for(const item of videos.items){
+      const url = await getDownloadURL(item);
+      vGrid.innerHTML += `<div class="card"><video src="${url}" controls></video></div>`;
+    }
+  }catch{}
 }
 
 loadMedia();
